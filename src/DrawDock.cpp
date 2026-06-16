@@ -199,7 +199,7 @@ void DrawDock::StopPythonDraw()
 		
 		this->python_thread.join();
 		PyGILState_STATE gstate = PyGILState_Ensure();
-		PyGILState_Release(gstate)
+		PyGILState_Release(gstate);
 	}
 }
 
