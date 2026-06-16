@@ -180,26 +180,8 @@ void DrawDock::StopPythonDraw()
 		return;
 	this->should_run.store(false);
 
-	if (this->python_thread.joinable()) {
-		PyEval_SaveThread();
-		
-		const auto start = std::chrono::steady_clock::now();
-		const auto timeout = std::chrono::seconds(5);
-		std::thread watchdog([this, start, timeout]() {
-			while (this->python_thread.joinable()) {
-				auto elapsed = std::chrono::steady_clock::now() - start;
-				if (elapsed > timeout) {
-					blog(LOG_WARNING, "Python thread join timeout - thread may be blocked by PyTorch");
-					return;
-				}
-				std::this_thread::sleep_for(std::chrono::milliseconds(100));
-			}
-		});
-		watchdog.detach();
-		
-		this->python_thread.join();
-		PyGILState_STATE gstate = PyGILState_Ensure();
-		PyGILState_Release(gstate);
+	if (this->python_thread.joinable()) {		
+		this->python_thread.detach();
 	}
 }
 
