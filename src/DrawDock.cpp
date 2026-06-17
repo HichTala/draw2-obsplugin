@@ -379,9 +379,9 @@ void DrawDock::initialize_python_interpreter()
 		}
 		Py_XDECREF(pModule);
 		blog(LOG_INFO, "Python interpreter initialized successfully");
-#ifdef _WIN32
-		this->main_thread_state = PyEval_SaveThread();
-#endif
+//#ifdef _WIN32
+//		this->main_thread_state = PyEval_SaveThread();
+//#endif
 		this->start_button->setEnabled(true);
 	} else {
 		blog(LOG_INFO, "Failed to initialize Python interpreter");
