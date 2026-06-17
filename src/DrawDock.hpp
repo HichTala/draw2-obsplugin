@@ -5,8 +5,6 @@
 #ifndef DRAW_DOCK_H
 #define DRAW_DOCK_H
 
-#define PY_SSIZE_T_CLEAN
-
 #include <QDockWidget>
 #include <QWidget>
 #include <QPushButton>
@@ -15,8 +13,10 @@
 #include <QApplication>
 #include <QIcon>
 #include <QStyle>
-#include <Python.h>
 #include <thread>
+
+struct _ts;
+typedef struct _ts PyThreadState;
 
 class DrawDock : public QWidget {
 	Q_OBJECT
