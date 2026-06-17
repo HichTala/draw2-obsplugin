@@ -13,6 +13,7 @@
 #include <QApplication>
 #include <QIcon>
 #include <QStyle>
+#include <Python.h>
 #include <thread>
 
 class DrawDock : public QWidget {
