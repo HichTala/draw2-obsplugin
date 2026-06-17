@@ -190,7 +190,7 @@ void DrawDock::StopPythonDraw()
 	blog(LOG_INFO, "is python thread joinable");
 	if (this->python_thread.joinable()) {	
 		blog(LOG_INFO, "yes it is");
-		//this->python_thread.join();
+		this->python_thread.join();
 		blog(LOG_INFO, "python thread joined");
 	}
 }
