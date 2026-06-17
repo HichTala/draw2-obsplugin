@@ -132,6 +132,7 @@ void DrawDock::StartPythonDraw()
 				PyTuple_SetItem(args, 7, PyLong_FromLong(confidence_value));
 
 				PyObject *result = PyObject_CallObject(pFunc, args);
+				blog(LOG_INFO, "pyobject called");
 				if (!result) {
 					blog(LOG_ERROR, "Draw2 python backend raised an exception");
 					PyErr_Print();
@@ -148,8 +149,11 @@ void DrawDock::StartPythonDraw()
 		} else {
 			blog(LOG_ERROR, "Failed to import draw module.");
 		}
+		blog(LOG_INFO, "pygilstate release");
 		PyGILState_Release(gstate);
+		blog(LOG_INFO, "pygilstate released");
 		this->running_flag.store(false);
+		blog(LOG_INFO, "end of thread");
 	});
 	std::thread([this]() {
 		for (int i = 0; i < 50000; ++i) {
@@ -180,8 +184,11 @@ void DrawDock::StopPythonDraw()
 		return;
 	this->should_run.store(false);
 
-	if (this->python_thread.joinable()) {		
-		this->python_thread.detach();
+	blog(LOG_INFO, "is python thread joinable");
+	if (this->python_thread.joinable()) {	
+		blog(LOG_INFO, "yes it is");
+		this->python_thread.join();
+		blog(LOG_INFO, "python thread joined");
 	}
 }
 
