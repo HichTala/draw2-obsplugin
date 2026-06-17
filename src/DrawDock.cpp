@@ -64,9 +64,12 @@ void DrawDock::StartButtonClicked()
 		this->start_button->setText(obs_module_text("starting_draw"));
 		StartPythonDraw();
 	} else {
+		blog(LOG_INFO, "button clicked");
 		StopPythonDraw();
+		blog(LOG_INFO, "python stopped");
 		this->start_button->setText(obs_module_text("start_draw"));
 		this->settings_button->setEnabled(true);
+		blog(LOG_INFO, "After click");
 	}
 }
 
