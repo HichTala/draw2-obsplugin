@@ -1,9 +1,7 @@
 <div align="center">
-    <p>
-        <img src="https://raw.githubusercontent.com/HichTala/draw2/refs/heads/main/figures/banner-draw.png" alt="DRAW Banner">
-    </p>
-
-
+  <p>
+    <img src="https://raw.githubusercontent.com/HichTala/draw2/refs/heads/main/figures/banner-draw.png" alt="DRAW Banner">
+  </p>
 <div>
 
 [![DRAW2 Workflow](https://github.com/HichTala/draw2-plugin/actions/workflows/push.yaml/badge.svg)](https://github.com/HichTala/draw2-plugin/actions/workflows/push.yaml)
@@ -15,7 +13,6 @@
 [![WandB](https://img.shields.io/badge/visualize_in-W%26B-yellow?logo=weightsandbiases&color=%23FFBE00)](https://wandb.ai/hich_/draw)
 
 [🇫🇷 Français](readmes/README_fr.md) | [🇧🇷 Português](readmes/README_pt-br.md) | [🇯🇵 日本語](readmes/README_jp.md)
-
 
 </div>
 
@@ -32,9 +29,10 @@ The python backend project is available [here](https://github.com/HichTala/draw2
 This project is licensed under the [GNU Affero General Public License v3.0](LICENCE); all contributions are welcome.
 
 ---
+
 ## <div align="center">📰 News</div>
 
-> 🃏 **Latest card pool:** `BLZD` --- last updated `18-05-2026`  
+> 🃏 **Latest card pool:** `BLZD` --- last updated `18-05-2026`
 > 🔧 **Latest app version:** `0.2.1-beta` --- last updated `01-06-2026`
 
 <table>
@@ -92,7 +90,7 @@ Follow the installation instruction depending on your operating system so everyt
 3. Once the installation is complete, launch OBS Studio. If everything is set up correctly, you should see in the
    `Docks` menu
    a new option called `Draw 2`. You can activate the dock and dock it wherever you want.
-   
+
    The download is complete, you can enjoy detecting !
 
 </details>
@@ -101,6 +99,7 @@ Follow the installation instruction depending on your operating system so everyt
 <summary>🐧 Linux</summary>
 
 Coming soon 👀
+
 </details>
 
 <details>
@@ -110,7 +109,91 @@ I'm not familiar enough with OBS on macOS to provide a reliable installation gui
 The plugin is able to compile successfully on macOS, but I haven't tested it thoroughly.
 If you have experience with OBS plugins on macOS and would like to contribute an installation guide,
 please feel free to submit a pull request.
-</details>
+
+#### Building from source (Apple Silicon / macOS 26+)
+
+There is no pre-built macOS release yet, so you have to build the plugin yourself.
+
+1. Install the build prerequisites with [Homebrew](https://brew.sh):
+
+   ```bash
+   brew install cmake ccache coreutils jq xcbeautify
+   ```
+
+   You also need a recent **Xcode** (with its command line tools) and a **Python 3**
+   install (`brew install python`).
+
+2. Configure and build. On Apple Silicon, build for the host architecture only —
+   the universal preset would also build an `x86_64` slice, which fails to link
+   because Homebrew's Python is `arm64`-only:
+
+   ```bash
+   cmake --preset macos -DCMAKE_OSX_ARCHITECTURES=arm64
+   cmake --build build_macos --config RelWithDebInfo
+   ```
+
+   On an Intel Mac, use `-DCMAKE_OSX_ARCHITECTURES=x86_64` instead.
+
+3. The built plugin bundle is produced at:
+
+   ```
+   build_macos/RelWithDebInfo/draw2-plugin.plugin
+   ```
+
+4. Install it by copying the bundle into your OBS plugins folder, then restart OBS:
+
+   ```bash
+   mkdir -p "$HOME/Library/Application Support/obs-studio/plugins"
+   cp -R build_macos/RelWithDebInfo/draw2-plugin.plugin \
+     "$HOME/Library/Application Support/obs-studio/plugins/"
+   ```
+
+   Once OBS restarts, the plugin appears as `Draw 2` in the `Docks` menu.
+
+#### Setting up the Python backend (macOS)
+
+The plugin embeds a Python interpreter and imports the `draw` backend from a
+Python installation **you** provide in the settings (`Select Python installation`).
+There is no automatic download on macOS yet, so you must set this up manually.
+
+> ⚠️ It must be a **full Python prefix (with the standard library)**, _not_ a
+> `venv`/`virtualenv`. The plugin sets `PYTHONHOME` to the folder you select; a
+> venv has no stdlib there and initialization fails with
+> `ModuleNotFoundError: No module named 'encodings'`.
+>
+> The Python **minor version must match the one the plugin was linked against**
+> (currently 3.13). Check with `otool -L .../draw2-plugin | grep -i python`.
+
+1. Get a self-contained CPython matching that version. A relocatable build from
+   [python-build-standalone](https://github.com/astral-sh/python-build-standalone)
+   works well and won't be broken by `brew upgrade`:
+
+   ```bash
+   # pick the install_only build for your arch (aarch64 for Apple Silicon)
+   curl -fL -o python.tar.gz \
+     https://github.com/astral-sh/python-build-standalone/releases/download/<tag>/cpython-3.13.<x>+<tag>-aarch64-apple-darwin-install_only.tar.gz
+   mkdir -p ~/.draw2-runtime && tar -xzf python.tar.gz -C ~/.draw2-runtime
+   ```
+
+2. Install the `draw` backend into that prefix. Use the **`obs-plugin` branch** —
+   that is the one that exposes the `draw.run(...)` entry point the plugin calls
+   (the default `main` branch is the standalone CLI and has no `run`, so the dock
+   will log `Failed to import draw module` / `Failed to find or call draw run function`):
+
+   ```bash
+   ~/.draw2-runtime/python/bin/python -m pip install "git+https://github.com/HichTala/draw2@obs-plugin"
+   ```
+
+3. In the Draw 2 settings, set **Select Python installation** to the prefix folder
+   (the one that contains `bin/` and `lib/`), e.g. `~/.draw2-runtime/python`.
+   Verify the layout expected by the plugin:
+
+   ```text
+   <prefix>/bin/python
+   <prefix>/lib/python3.13/site-packages/draw
+   ```
+
+   </details>
 
 ### 🚀 Usage
 
@@ -118,13 +201,16 @@ When the plugin is installed and the model weights are downloaded, you can launc
 
 1. Open the `Docks` menu and select `Draw 2` to activate the plugin dock.
 2. In the Draw 2 dock, you can configure the plugin settings by clicking on the gear icon next to `Start DRAW` button:
-    - **Select Deck List**: Choose the deck list file that contains the cards you want to detect. 3 deck lists
-      can be handled at the same time. To add new deck lists, you can click the `Open Folder` button and drag and drop
-      your deck list files (in ydk format) into the opened folder.
-    - **Minimum Out of Screen Time**: The minimum time a card just detected can be displayed again.
-    - **Minimum Screen Time**: The minimum time a card is displayed.
-    - **Confidence Threshold**: Set the minimum confidence level for card detection. Detections below this threshold
-      will be ignored.
+   - **Select Python installation**: Path to the Python prefix that has the `draw` backend installed (the folder
+     containing `bin/` and `lib/`). Must be a full Python install, not a virtualenv. See the macOS setup section
+     for details.
+   - **Select Deck List**: Choose the deck list file that contains the cards you want to detect. 3 deck lists
+     can be handled at the same time. To add new deck lists, you can click the `Open Folder` button and drag and drop
+     your deck list files (in ydk format) into the opened folder.
+   - **Minimum Out of Screen Time**: The minimum time a card just detected can be displayed again.
+   - **Minimum Screen Time**: The minimum time a card is displayed.
+   - **Confidence Threshold**: Set the minimum confidence level for card detection. Detections below this threshold
+     will be ignored.
 3. The plugin provide a new source called `Draw Display`. You can add it to your scene like any other source.
    This source will display the detected cards on the screen. You can choose what source/scene to detect cards from.
 4. Click the `Start DRAW` button to start the detection process. The plugin will start detecting cards in real time
@@ -134,14 +220,16 @@ When the plugin is installed and the model weights are downloaded, you can launc
 5. In the other case you can enjoy the plugin!
 
 Here is a small overview :)
+
 <div align="center">
     <img src="https://raw.githubusercontent.com/HichTala/draw2/refs/heads/main/figures/overview.gif" width="960" height="540" />
 </div>
 
 ---
+
 ## <div align="center">🔍Method Overview</div>
 
-A medium blog post explainng the main process from data collection to final prediction has been written. 
+A medium blog post explainng the main process from data collection to final prediction has been written.
 You can access it at [this](https://medium.com/@hich.tala.phd/how-i-trained-again-my-model-to-detect-and-recognise-a-wide-range-of-yu-gi-oh-cards-5c567a320b0a) adress. If you have any questions, don't hesitate to open an issue.
 
 [![Medium](https://img.shields.io/badge/-Medium-12100E?style=flat&logo=medium&labelColor=555)](https://medium.com/@hich.tala.phd/how-i-trained-again-my-model-to-detect-and-recognise-a-wide-range-of-yu-gi-oh-cards-5c567a320b0a)
@@ -158,11 +246,11 @@ at [hich.tala.phd@gmail.com](mailto:hich.tala.phd@gmail.com).
 ## <div align="center">⭐Star History</div>
 
 <div align="center">
-<a href="https://www.star-history.com/#hichtala/draw2&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=hichtala/draw2&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=hichtala/draw2&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=hichtala/draw2&type=date&legend=top-left" />
- </picture>
-</a>
+  <a href="https://www.star-history.com/#hichtala/draw2&type=date&legend=top-left">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=hichtala/draw2&type=date&theme=dark&legend=top-left" />
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=hichtala/draw2&type=date&legend=top-left" />
+      <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=hichtala/draw2&type=date&legend=top-left" />
+    </picture>
+  </a>
 </div>

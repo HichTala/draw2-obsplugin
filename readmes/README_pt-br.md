@@ -108,6 +108,13 @@ Não sou tão familiar com o OBS no MacOS para fornecer um guida de instalação
 O plugin é capaz de compilar com sucesso no MacOS mas não testei ele completamente.
 Se você tem experiência com plugins do OBS no MacOS e gostaria de contribuir com um guia de instalação, 
 sinta-se livre para enviar um pull request.
+
+> ℹ️ O backend Python (`Select Python installation`) precisa ser configurado
+> manualmente no macOS. Aponte para um **prefixo Python completo (com a
+> biblioteca padrão), não um `venv`**, com a versão correspondente à que o
+> plugin foi vinculado (atualmente 3.13), e instale o backend a partir do
+> branch **`obs-plugin`** (`pip install "git+https://github.com/HichTala/draw2@obs-plugin"`).
+> Veja a seção macOS do [README em inglês](../README.md) para os detalhes.
 </details>
 
 ### 🚀 Uso

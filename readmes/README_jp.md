@@ -66,6 +66,8 @@ OSに応じた手順に従ってセットアップしてください。
 <summary>🍏 MacOS</summary>
 
 MacOSでのOBSプラグインに詳しくないため、信頼性のあるインストールガイドを提供できません。MacOSでのコンパイルは成功していますが、十分なテストを行っていません。MacOSでのOBSプラグインに詳しい方がいれば、インストールガイドの作成にぜひ協力ください。Pull Requestをお待ちしています。
+
+> ℹ️ macOSではPythonバックエンド（`Select Python installation`）を手動で設定する必要があります。`venv`ではなく、**標準ライブラリを含む完全なPythonのprefix**を指定し、プラグインがリンクしているバージョン（現在は3.13）に合わせ、**`obs-plugin`ブランチ**からバックエンドをインストールしてください（`pip install "git+https://github.com/HichTala/draw2@obs-plugin"`）。詳細は[英語版README](../README.md)のmacOSセクションを参照してください。
 </details>
 
 ### 🚀 使い方
