@@ -23,10 +23,10 @@ public:
 	~DrawDock() override;
 
 private:
+	PyThreadState *main_thread_state = nullptr;
 	QWidget *parent = nullptr;
 	QPushButton *start_button = new QPushButton();
 	QPushButton *settings_button = new QPushButton();
-	PyThreadState* main_thread_state = nullptr;
 	std::thread python_thread;
 	std::atomic<bool> should_run = false;
 	std::atomic<bool> model_ready = false;
