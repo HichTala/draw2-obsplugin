@@ -15,9 +15,6 @@
 #include <QStyle>
 #include <thread>
 
-struct _ts;
-typedef struct _ts PyThreadState;
-
 class DrawDock : public QWidget {
 	Q_OBJECT
 
@@ -26,7 +23,6 @@ public:
 	~DrawDock() override;
 
 private:
-	PyThreadState *main_thread_state = nullptr;
 	QWidget *parent = nullptr;
 	QPushButton *start_button = new QPushButton();
 	QPushButton *settings_button = new QPushButton();
