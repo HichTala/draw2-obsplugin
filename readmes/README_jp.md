@@ -11,7 +11,7 @@
 [![Medium](https://img.shields.io/badge/-Medium-12100E?style=flat&logo=medium&labelColor=555)](https://medium.com/@hich.tala.phd/how-i-trained-again-my-model-to-detect-and-recognise-a-wide-range-of-yu-gi-oh-cards-5c567a320b0a)
 [![WandB](https://img.shields.io/badge/visualize_in-W%26B-yellow?logo=weightsandbiases&color=%23FFBE00)](https://wandb.ai/hich_/draw)
 
-[🇬🇧 English](../README.md) | [🇫🇷 Français](README_fr.md) | [🇧🇷 Português](README_pt-br.md)
+[🇬🇧 English](../README.md) | [🇫🇷 Français](README_fr.md) | [🇧🇷 Português](README_pt-br.md) | [🇪🇸 Español](README_es.md)
 
 </div>
 
@@ -66,6 +66,8 @@ OSに応じた手順に従ってセットアップしてください。
 <summary>🍏 MacOS</summary>
 
 MacOSでのOBSプラグインに詳しくないため、信頼性のあるインストールガイドを提供できません。MacOSでのコンパイルは成功していますが、十分なテストを行っていません。MacOSでのOBSプラグインに詳しい方がいれば、インストールガイドの作成にぜひ協力ください。Pull Requestをお待ちしています。
+
+> ℹ️ macOSでは、Pythonバックエンドは**別プロセス**として動作します（プラグインはインタープリタを埋め込みません）。**Select Python installation** に、`draw` パッケージを **`obs-plugin`** ブランチからインストールした Python プレフィックスを指定してください（`pip install "git+https://github.com/HichTala/draw2@obs-plugin"`）。最近の Python 3 であれば動作し、プラグインのバージョンに一致させる必要はありません。ビルドとセットアップの詳細は[英語版README](../README.md)のmacOSセクションを参照してください。
 </details>
 
 ### 🚀 使い方
