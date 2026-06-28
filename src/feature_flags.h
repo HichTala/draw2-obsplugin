@@ -22,6 +22,7 @@ extern "C" {
 bool draw_feature_enabled(const char *key);
 
 // QSettings keys for the optional features (keep in sync with SettingsDialog).
+#define FEATURE_CHANNEL "feature_channel"
 #define FEATURE_CROP "feature_crop"
 #define FEATURE_ROTATE "feature_rotate"
 #define FEATURE_DEBUG "feature_debug"
