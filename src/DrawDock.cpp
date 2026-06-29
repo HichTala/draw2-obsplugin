@@ -11,6 +11,7 @@
 #include "feature_flags.h"
 
 #include <QDir>
+#include <QProcessEnvironment>
 #include <QSettings>
 #include <QFileInfo>
 #include <QStringList>
@@ -291,6 +292,24 @@ void DrawDock::StartChannel(int channel, const QString &python_exe)
 				  .arg(min_out)
 				  .arg(min_screen));
 		AppendLog(QString("· [P%1] debug: deck_list=%2").arg(channel).arg(deck_list));
+	}
+
+	// Opt-in: export structured card info to files (for OBS Text sources / bots /
+	// overlays). When off, set nothing so the backend behaves exactly as upstream.
+	if (draw_feature_enabled(FEATURE_CARD_INFO)) {
+		const char *state_dir = get_state_path();
+		if (state_dir) {
+			const QString lang = settings.value("card_info_lang", "en").toString();
+			QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+			env.insert("DRAW2_CARD_INFO_DIR", QString::fromUtf8(state_dir));
+			env.insert("DRAW2_CARD_INFO_LANG", lang);
+			process->setProcessEnvironment(env);
+			if (draw_feature_enabled(FEATURE_DEBUG))
+				AppendLog(QString("· [P%1] debug: card info → %2 (lang=%3)")
+						  .arg(channel)
+						  .arg(QString::fromUtf8(state_dir))
+						  .arg(lang));
+		}
 	}
 
 	process->start(python_exe, args);

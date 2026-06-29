@@ -235,11 +235,13 @@ SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent)
 	this->feature_rotate->setChecked(settings.value("feature_rotate", false).toBool());
 	this->feature_debug->setChecked(settings.value("feature_debug", false).toBool());
 	this->feature_remote_deck->setChecked(feature_remote_deck_value);
+	this->feature_card_info->setChecked(settings.value("feature_card_info", false).toBool());
 	features_layout->addWidget(this->feature_channel);
 	features_layout->addWidget(this->feature_crop);
 	features_layout->addWidget(this->feature_rotate);
 	features_layout->addWidget(this->feature_debug);
 	features_layout->addWidget(this->feature_remote_deck);
+	features_layout->addWidget(this->feature_card_info);
 	features_layout->addStretch();
 
 	tabs->addTab(general_page, obs_module_text("general_tab"));
@@ -314,6 +316,7 @@ void SettingsDialog::OkButtonClicked()
 	settings.setValue("feature_rotate", this->feature_rotate->isChecked());
 	settings.setValue("feature_debug", this->feature_debug->isChecked());
 	settings.setValue("feature_remote_deck", this->feature_remote_deck->isChecked());
+	settings.setValue("feature_card_info", this->feature_card_info->isChecked());
 	settings.setValue("deck_url1", this->deck_url1->text());
 	settings.setValue("deck_url1_p2", this->deck_url1_p2->text());
 	settings.setValue("remote_header_name", this->remote_header_name->text());
