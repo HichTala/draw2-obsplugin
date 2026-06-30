@@ -14,7 +14,7 @@
 [![Medium](https://img.shields.io/badge/-Medium-12100E?style=flat&logo=medium&labelColor=555)](https://medium.com/@hich.tala.phd/how-i-trained-again-my-model-to-detect-and-recognise-a-wide-range-of-yu-gi-oh-cards-5c567a320b0a)
 [![WandB](https://img.shields.io/badge/visualize_in-W%26B-yellow?logo=weightsandbiases&color=%23FFBE00)](https://wandb.ai/hich_/draw)
 
-[🇬🇧 English](../README.md) | [🇧🇷 Português](README_pt-br.md) | [🇯🇵 日本語](README_jp.md)
+[🇬🇧 English](../README.md) | [🇧🇷 Português](README_pt-br.md) | [🇯🇵 日本語](README_jp.md) | [🇪🇸 Español](README_es.md)
 
 </div>
 
@@ -112,6 +112,8 @@ Je ne connais pas suffisamment bien OBS sur macOS pour fournir un guide d'instal
 Le plugin peut être compilé avec succès sur macOS, mais je ne l'ai pas testé de manière approfondie.
 Si vous avez de l'expérience avec les plugins OBS sur macOS et que vous souhaitez contribuer à un guide d'installation,
 n'hésitez pas à soumettre une demande d'extraction.
+
+> ℹ️ Sur macOS, le backend Python tourne comme un **processus séparé** (le plugin n'embarque plus d'interpréteur). Dans **Select Python installation**, indiquez un préfixe Python qui contient le paquet `draw`, installé depuis la branche **`obs-plugin`** (`pip install "git+https://github.com/HichTala/draw2@obs-plugin"`). N'importe quel Python 3 récent convient — il n'a pas besoin de correspondre à la version du plugin. Voir la section macOS du [README en anglais](../README.md) pour les étapes complètes de compilation et de configuration.
 </details>
 
 ### 🚀 Utilisation
@@ -121,20 +123,34 @@ Une fois le plugin installé et les poids du modèle téléchargés, vous pouvez
 1. Ouvrez le menu `Docks` et sélectionnez `Draw 2` pour activer le dock du plugin.
 2. Dans le dock `Draw 2`, vous pouvez configurer les paramètres du plugin en cliquant sur l'icône en forme d'engrenage à
    côté du bouton `Start DRAW` :
-    - **Sélectionner la liste de deck** : choisissez les deck lists qui contiennent les cartes que vous souhaitez
-      détecter. 3 deck lists
-      peuvent être gérées en même temps. Pour ajouter de nouvelles deck lists, vous pouvez cliquer sur le bouton
-      `Ouvrir le dossier` et glisser-déposer
-      vos fichiers deck lists (au format ydk) dans le dossier ouvert.
+    - **Sélectionner les listes de deck** : choisissez les deck lists qui contiennent les cartes que vous souhaitez
+      détecter — jusqu'à 3. Pour ajouter des deck lists, cliquez sur `Open Folder` et déposez vos fichiers `.ydk` dans le dossier ouvert.
     - **Durée minimale hors écran** : durée minimale pendant laquelle une carte qui vient d'être détectée peut être
       affichée à nouveau.
     - **Durée minimale d'affichage** : durée minimale pendant laquelle une carte est affichée.
     - **Seuil de confidence** : définissez le niveau de confiance minimum pour la détection des cartes. Les détections
       inférieures à ce seuil seront ignorées.
+    - **Advanced features** (désactivées par défaut) : deux réglages optionnels de l'entrée du détecteur qui
+      n'affectent que ce que voit le détecteur, pas votre sortie en direct. Activez-les ici, puis configurez les
+      valeurs sur la source `Draw Display` :
+      - **Enable two players** — ajoute un ensemble de deck lists **Player 2** et lance un **détecteur distinct par joueur**, permettant de traiter deux joueurs simultanément. Laissez cette option désactivée pour une configuration à un seul joueur.
+      - **Enable detector input crop** — ajoute des champs **Crop (Left/Top/Right/Bottom, px)** à la source,
+        pour cibler la zone où les cartes sont posées.
+      - **Enable 180° input rotation** — ajoute un interrupteur **Rotate input 180°** à la source, pour une
+        caméra montée à l'envers.
+      - Lorsque l'une ou l'autre est activée, la source gagne également le bouton **Preview detector input** :
+        activez-le pour que la source affiche l'image recadrée/pivotée qu'elle envoie au détecteur (afin de
+        régler le recadrage directement dans l'aperçu de la source), puis désactivez-le pour revenir à
+        l'affichage des cartes détectées.
+    - **Enable debug logging** (désactivé par défaut) : affiche des diagnostics détaillés — le journal du dock
+      montre le lancement exact du backend (chemins de deck résolus, canal, seuils) et chaque ligne du backend
+      sans filtrage, et le journal OBS reçoit les détails de capture (source d'entrée, dimensions,
+      recadrage/rotation). Pratique quand la détection ne se comporte pas comme prévu.
 3. Le plugin fournit une nouvelle source appelée `Affichage DRAW`. Vous pouvez l'ajouter à votre scène comme n'importe
    quelle autre source.
    Cette source affichera les cartes détectées à l'écran. Vous pouvez choisir la source/scène à partir de laquelle
-   détecter les cartes.
+   détecter les cartes. Avec le mode deux joueurs activé, utilisez la propriété **Detector / Player** de la source pour choisir de quel détecteur elle
+   lit (**Player 1** ou **Player 2**) ; ajoutez un `Draw Display` par joueur pour afficher les deux simultanément.
 4. Cliquez sur le bouton `Start DRAW` pour lancer le processus de détection. Le plugin commencera à détecter les cartes
    en temps réel
    et les affichera à l'écran à l'aide de la source `Draw Display`. Le plugin commence la détection dès que le bouton

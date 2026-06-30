@@ -22,15 +22,17 @@ add_library(
   src/draw.h
   src/shared_memory_wrapper.cpp
   src/shared_memory_wrapper.h
+  src/feature_flags.cpp
+  src/feature_flags.h
   src/plugin-path.h
 )
 
 find_package(libobs REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs)
 
-find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${Python3_INCLUDE_DIRS})
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${Python3_LIBRARIES})
+# The Python backend runs as a separate process (launched via QProcess), so the
+# plugin must NOT embed libpython. Embedding it clashes with OBS' own scripting
+# (obs-scripting) Python symbols on macOS and breaks numpy/torch in-process.
 
 target_compile_features(${CMAKE_PROJECT_NAME} PUBLIC cxx_std_20)
 
@@ -63,6 +65,7 @@ if(ENABLE_QT)
     ${CMAKE_PROJECT_NAME}
     PRIVATE $<$<C_COMPILER_ID:Clang,AppleClang>:-Wno-quoted-include-in-framework-header -Wno-comma>
   )
+
   set_target_properties(
     ${CMAKE_PROJECT_NAME}
     PROPERTIES AUTOMOC ON AUTOUIC ON AUTORCC ON

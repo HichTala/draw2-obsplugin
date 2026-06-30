@@ -1,25 +1,42 @@
 //
 // Created by HichTala on 21/06/25.
 //
-#define PY_SSIZE_T_CLEAN
 
 #include "plugin-path.h"
-
-#include <Python.h>
-#include <cstdio>
-#include <cwchar>
-#ifdef _WIN32
-#include <windows.h>
-#include <tchar.h>
-#endif
+#include "feature_flags.h"
 
 #include "DrawDock.hpp"
-
 #include "SettingsDialog.hpp"
 
 #include <QSettings>
-#include <QStandardPaths>
+#include <QFileInfo>
+#include <QStringList>
+#include <QFont>
+#include <QTime>
 #include <obs-module.h>
+
+#ifndef _WIN32
+#include <csignal>
+#include <unistd.h>
+#endif
+
+// The backend is launched with this snippet. It instantiates the shared-memory
+// handler with the selected model/options and runs it until the process is
+// stopped. No control capsules are used: lifecycle is driven by the process
+// itself (stop == terminate the process), and frames flow through the POSIX
+// shared memory that the Draw Display source already manages.
+static const char *kBackendScript =
+	"import sys\n"
+	"from draw.run import DrawSharedMemoryHandler\n"
+	"models = ['HichTala/draw2', 'HichTala/draw2-large']\n"
+	"DrawSharedMemoryHandler(\n"
+	"    model_id=models[int(sys.argv[1])],\n"
+	"    deck_list=sys.argv[2],\n"
+	"    minimum_out_of_screen_time=int(sys.argv[3]),\n"
+	"    minimum_screen_time=int(sys.argv[4]),\n"
+	"    confidence_threshold=int(sys.argv[5]),\n"
+	"    channel=sys.argv[6],\n"
+	")()\n";
 
 DrawDock::DrawDock(QWidget *parent) : QWidget(parent)
 {
@@ -27,41 +44,66 @@ DrawDock::DrawDock(QWidget *parent) : QWidget(parent)
 
 	this->setProperty("class", "dock-widget");
 
-	auto *layout = new QHBoxLayout(this);
+	auto *layout = new QVBoxLayout(this);
 	layout->setContentsMargins(5, 4, 5, 4);
 	layout->setSpacing(4);
+
+	auto *buttons = new QHBoxLayout();
+	buttons->setSpacing(4);
 
 	this->start_button->setText(obs_module_text("start_draw"));
 	this->start_button->setCheckable(true);
 	this->start_button->setProperty("class", "start-streaming");
-	layout->addWidget(this->start_button);
+	buttons->addWidget(this->start_button);
 
 	this->settings_button->setProperty("class", "icon-gear");
 	this->settings_button->setEnabled(true);
 	this->settings_button->setToolTip("Settings");
 	this->settings_button->setFixedHeight(this->start_button->sizeHint().height());
 	this->settings_button->setFixedWidth(this->start_button->sizeHint().height());
-	layout->addWidget(this->settings_button);
+	buttons->addWidget(this->settings_button);
 
-	resize(300, 300);
+	layout->addLayout(buttons);
+
+	this->log_view->setReadOnly(true);
+	this->log_view->setMaximumBlockCount(500); // cap memory: keep last 500 lines
+	this->log_view->setLineWrapMode(QPlainTextEdit::NoWrap);
+	this->log_view->setPlaceholderText(obs_module_text("log_placeholder"));
+	this->log_view->document()->setDefaultFont(QFont("Menlo", 10));
+	layout->addWidget(this->log_view, 1);
+
+	resize(360, 300);
 
 	connect(start_button, SIGNAL(clicked()), SLOT(StartButtonClicked()));
 	connect(settings_button, SIGNAL(clicked()), SLOT(SettingsButtonClicked()));
-
-	initialize_python_interpreter();
 }
+
 DrawDock::~DrawDock()
 {
-	if (this->should_run)
-		StopPythonDraw();
-};
+	StopPythonDraw();
+}
+
+void DrawDock::ResetUi()
+{
+	this->ready_count = 0;
+	this->launched_count = 0;
+	this->start_button->setChecked(false);
+	this->start_button->setText(obs_module_text("start_draw"));
+	this->start_button->setEnabled(true);
+	this->settings_button->setEnabled(true);
+}
+
+void DrawDock::AppendLog(const QString &line)
+{
+	this->log_view->appendPlainText(QTime::currentTime().toString("HH:mm:ss") + "  " + line);
+}
 
 void DrawDock::StartButtonClicked()
 {
 	if (this->start_button->isChecked()) {
-		this->start_button->setText(obs_module_text("start_draw"));
 		this->start_button->setDisabled(true);
 		this->start_button->setText(obs_module_text("starting_draw"));
+		this->settings_button->setEnabled(false);
 		StartPythonDraw();
 	} else {
 		StopPythonDraw();
@@ -78,301 +120,154 @@ void DrawDock::SettingsButtonClicked()
 
 void DrawDock::StartPythonDraw()
 {
-	if (this->running_flag.load())
+	if (this->draw_process[0] || this->draw_process[1])
 		return;
-	this->running_flag.store(true);
-	this->should_run.store(true);
-	this->model_ready.store(false);
-	this->update_flag.store(false);
 
-	this->python_thread = std::thread([this]() {
-		blog(LOG_INFO, "Starting Draw2 python backend");
-		PyGILState_STATE gstate = PyGILState_Ensure();
+	QSettings settings("HichTala", "Draw2");
 
-		PyObject *pModule = PyImport_ImportModule("draw");
+	QString python_home = settings.value("python_path", "").toString();
+#ifdef _WIN32
+	QString python_exe = python_home + "/python.exe";
+#else
+	QString python_exe = python_home + "/bin/python";
+#endif
+	if (python_home.isEmpty() || !QFileInfo::exists(python_exe)) {
+		blog(LOG_ERROR, "Draw2: invalid Python installation '%s' (expected '%s')",
+		     python_home.toUtf8().constData(), python_exe.toUtf8().constData());
+		AppendLog(QString("✗ ") + obs_module_text("invalid_python_path"));
+		QMessageBox::warning(this, "Draw 2", obs_module_text("invalid_python_path"));
+		ResetUi();
+		return;
+	}
 
-		if (pModule) {
-			PyObject *pFunc = PyObject_GetAttrString(pModule, "run");
-			if (pFunc && PyCallable_Check(pFunc)) {
-				PyObject *args = PyTuple_New(8);
-				PyObject *capsule_stop = PyCapsule_New(&this->should_run, "stop_flag", nullptr);
-				PyTuple_SetItem(args, 0, capsule_stop);
+	this->ready_count = 0;
+	this->launched_count = 0;
 
-				PyObject *capsule_ready = PyCapsule_New(&this->model_ready, "model_ready", nullptr);
-				PyTuple_SetItem(args, 1, capsule_ready);
+	// Opt-in: a second detector (player 2) only when the feature is enabled.
+	bool two_players = draw_feature_enabled(FEATURE_CHANNEL);
+	AppendLog(two_players ? "▶ Launching detectors for 2 players… (loading models, first run may take a while)"
+			      : "▶ Launching the card detector… (loading models, first run may take a while)");
 
-				PyObject *capsule_update = PyCapsule_New(&this->update_flag, "update_flag", nullptr);
-				PyTuple_SetItem(args, 2, capsule_update);
+	StartChannel(1, python_exe);
+	if (two_players)
+		StartChannel(2, python_exe);
+}
 
-				QSettings settings = QSettings("HichTala", "Draw2");
-				int model_choice = settings.value("model_choice", 0).value<int>();
-				PyTuple_SetItem(args, 3, PyLong_FromLong(model_choice));
+void DrawDock::StartChannel(int channel, const QString &python_exe)
+{
+	QSettings settings("HichTala", "Draw2");
 
-				QByteArray deck_list_path1 = settings.value("deck_list1", "").toString().toUtf8();
-				QByteArray deck_list_path2 = settings.value("deck_list2", "").toString().toUtf8();
-				QByteArray deck_list_path3 = settings.value("deck_list3", "").toString().toUtf8();
-				const char *plugin_dir = get_plugin_path();
-				PyTuple_SetItem(args, 4,
-						PyUnicode_FromString((plugin_dir + std::string("/decklists/") +
-								      std::string(deck_list_path1) + std::string(";") +
-								      plugin_dir + std::string("/decklists/") +
-								      std::string(deck_list_path2) + std::string(";") +
-								      plugin_dir + std::string("/decklists/") +
-								      std::string(deck_list_path3) + std::string(";"))
-									     .c_str()));
+	int model_choice = settings.value("model_choice", 0).value<int>();
+	int min_out = settings.value("minimum_out_of_screen_time", 25).value<int>();
+	int min_screen = settings.value("minimum_screen_time", 6).value<int>();
+	int confidence = settings.value("confidence_slider", 5).value<int>();
 
-				int minimum_out_of_screen_time_value =
-					settings.value("minimum_out_of_screen_time", 25).value<int>();
-				PyTuple_SetItem(args, 5, PyLong_FromLong(minimum_out_of_screen_time_value));
+	// Per-player deck lists: player 1 uses deck_listN, player 2 deck_listN_p2.
+	QString sfx = (channel == 2) ? "_p2" : "";
+	QString dir = QString::fromUtf8(get_decklists_path()) + "/";
+	QString deck_list = dir + settings.value("deck_list1" + sfx, "").toString() + ";" + dir +
+			    settings.value("deck_list2" + sfx, "").toString() + ";" + dir +
+			    settings.value("deck_list3" + sfx, "").toString() + ";";
 
-				int minimum_screen_time_value = settings.value("minimum_screen_time", 6).value<int>();
-				PyTuple_SetItem(args, 6, PyLong_FromLong(minimum_screen_time_value));
+	auto *process = new QProcess(this);
+	process->setProcessChannelMode(QProcess::MergedChannels);
+	this->draw_process[channel - 1] = process;
+	this->launched_count++;
 
-				int confidence_value = settings.value("confidence_slider", 5).value<int>();
-				PyTuple_SetItem(args, 7, PyLong_FromLong(confidence_value));
-
-				PyObject *result = PyObject_CallObject(pFunc, args);
-				if (!result) {
-					blog(LOG_ERROR, "Draw2 python backend raised an exception");
-					PyErr_Print();
-				} else {
-					Py_DECREF(result);
+	connect(process, &QProcess::readyReadStandardOutput, this, [this, process, channel]() {
+		while (process->canReadLine()) {
+			QByteArray line = process->readLine().trimmed();
+			if (line.isEmpty())
+				continue;
+			blog(LOG_INFO, "[draw2-backend P%d] %s", channel, line.constData());
+			// Debug mode surfaces every backend line; otherwise filter the noisy ones.
+			if (draw_feature_enabled(FEATURE_DEBUG) ||
+			    (!line.contains("unauthenticated requests") && !line.contains("use_fast") &&
+			     !line.contains("Loading weights") && !line.startsWith("mapped size"))) {
+				AppendLog(QString("[P%1] ").arg(channel) + QString::fromUtf8(line));
+			}
+			if (line.contains("Waiting for OBS to start")) {
+				ready_count++;
+				if (ready_count >= launched_count) {
+					start_button->setEnabled(true);
+					start_button->setText(obs_module_text("stop_draw"));
 				}
-				Py_DECREF(args);
-
-			} else {
-				blog(LOG_ERROR, "Failed to find or call draw run function.");
 			}
-			Py_XDECREF(pFunc);
-			Py_XDECREF(pModule);
-		} else {
-			blog(LOG_ERROR, "Failed to import draw module.");
 		}
-		PyGILState_Release(gstate);
-		this->running_flag.store(false);
 	});
-	std::thread([this]() {
-		for (int i = 0; i < 50000; ++i) {
-			if (this->model_ready.load()) {
-				this->start_button->setEnabled(true);
-				this->start_button->setText(obs_module_text("stop_draw"));
-				blog(LOG_INFO, "Draw2 python backend started successfully");
-				break;
+
+	connect(process, &QProcess::errorOccurred, this, [this, channel](QProcess::ProcessError error) {
+		blog(LOG_ERROR, "Draw2 backend P%d process error (%d)", channel, (int)error);
+		AppendLog(QString("✗ [P%1] backend error (%2)").arg(channel).arg((int)error));
+	});
+
+	connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this,
+		[this, channel](int code, QProcess::ExitStatus status) {
+			blog(LOG_INFO, "Draw2 backend P%d exited (code %d, status %d)", channel, code, (int)status);
+			AppendLog(QString("■ [P%1] backend exited (code %2)").arg(channel).arg(code));
+			if (draw_process[channel - 1]) {
+				draw_process[channel - 1]->deleteLater();
+				draw_process[channel - 1] = nullptr;
 			}
-			if (this->update_flag.load()) {
-				this->start_button->setText(obs_module_text("updating_draw"));
-			} else {
-				this->start_button->setText(obs_module_text("starting_draw"));
-			}
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		}
-		if (!this->start_button->isEnabled()) {
-			this->start_button->setDisabled(true);
-			this->start_button->setText(obs_module_text("start_draw"));
-		}
-	}).detach();
+			// Reset the UI only once both detectors are gone.
+			if (!draw_process[0] && !draw_process[1])
+				ResetUi();
+		});
+
+	// -u: unbuffered so the backend's progress lines reach us immediately.
+	QStringList args;
+	args << "-u" << "-c" << QString::fromUtf8(kBackendScript) << QString::number(model_choice) << deck_list
+	     << QString::number(min_out) << QString::number(min_screen) << QString::number(confidence)
+	     << QString::number(channel);
+
+	blog(LOG_INFO, "Draw2: launching backend P%d: %s", channel, python_exe.toUtf8().constData());
+
+	// Debug mode: surface the exact launch parameters in the dock log, so the
+	// resolved deck paths / channel / thresholds are visible without digging.
+	if (draw_feature_enabled(FEATURE_DEBUG)) {
+		AppendLog(QString("· [P%1] debug: python=%2").arg(channel).arg(python_exe));
+		AppendLog(QString("· [P%1] debug: model=%2 channel=%3 confidence=%4 min_out=%5 min_screen=%6")
+				  .arg(channel)
+				  .arg(model_choice)
+				  .arg(channel)
+				  .arg(confidence)
+				  .arg(min_out)
+				  .arg(min_screen));
+		AppendLog(QString("· [P%1] debug: deck_list=%2").arg(channel).arg(deck_list));
+	}
+
+	process->start(python_exe, args);
 }
 
 void DrawDock::StopPythonDraw()
 {
-	blog(LOG_INFO, "Stopping Draw2 python backend");
-	if (!this->running_flag.load())
-		return;
-	this->should_run.store(false);
+	bool any = false;
+	for (int i = 0; i < 2; i++) {
+		QProcess *process = this->draw_process[i];
+		if (!process)
+			continue;
+		any = true;
+		this->draw_process[i] = nullptr;
 
-	if (this->python_thread.joinable()) {
-		this->python_thread.join();
-	}
-}
+		// Deliberate teardown: detach handlers so finished/error don't fire.
+		process->disconnect(this);
 
-void DrawDock::initialize_python_interpreter()
-{
-	blog(LOG_INFO, "Initializing Python interpreter ");
-
-	this->start_button->setDisabled(true);
+		if (process->state() != QProcess::NotRunning) {
 #ifndef _WIN32
-	wchar_t pythonPath[512];
-#endif
-	wchar_t pythonExe[256];
-	wchar_t pythonHome[256];
-	if (!Py_IsInitialized()) {
-
-		QSettings settings = QSettings("HichTala", "Draw2");
-		QByteArray pyHome = settings.value("python_path", "").toString().toUtf8();
-		QFileInfo pyHomeInfo(QString::fromUtf8(pyHome));
-		if (!pyHomeInfo.exists() || !pyHomeInfo.isDir()) {
-			blog(LOG_INFO, "Failed to initialize Python interpreter Python home path invalid");
-			return;
-		}
-#ifdef _WIN32
-		QByteArray pyExe = pyHome + "/python.exe";
+			// SIGINT lets the backend close shared memory cleanly.
+			::kill((pid_t)process->processId(), SIGINT);
 #else
-		QString pythonVersion;
-		FILE *pipe = popen(
-			"python3 -c \"import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')\"", "r");
-		if (!pipe) {
-			blog(LOG_ERROR, "Failed to retrieve Python version");
-			return;
-		}
-		char buffer[128];
-		if (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-			pythonVersion = QString::fromUtf8(buffer).trimmed();
-		}
-		pclose(pipe);
-		QString sitePackagesPath = pyHome + "/lib/python" + pythonVersion + "/site-packages";
-		QFileInfo sitePackagesPathInfo(sitePackagesPath);
-
-		if (!sitePackagesPathInfo.exists() || !sitePackagesPathInfo.isDir()) {
-			blog(LOG_INFO, "Failed to initialize Python interpreter");
-			return;
-		}
-		QByteArray pyExe = pyHome + "/bin/python";
-
-		wcsncpy(pythonPath, sitePackagesPath.toStdWString().c_str(), sizeof(pythonPath) / sizeof(wchar_t));
-		pythonPath[sizeof(pythonPath) / sizeof(wchar_t) - 1] = L'\0';
+			process->terminate();
 #endif
-
-		wcsncpy(pythonHome, QString::fromUtf8(pyHome).toStdWString().c_str(),
-			sizeof(pythonHome) / sizeof(wchar_t));
-		pythonHome[sizeof(pythonHome) / sizeof(wchar_t) - 1] = L'\0';
-
-		wcsncpy(pythonExe, QString::fromUtf8(pyExe).toStdWString().c_str(),
-			sizeof(pythonExe) / sizeof(wchar_t));
-		pythonExe[sizeof(pythonExe) / sizeof(wchar_t) - 1] = L'\0';
-
-		blog(LOG_INFO, "Python Home: %ls", pythonHome);
-		blog(LOG_INFO, "Python Executable: %ls", pythonExe);
-
-		PyConfig config;
-		PyConfig_InitPythonConfig(&config);
-
-		PyConfig_SetString(&config, &config.executable, pythonExe);
-		PyConfig_SetString(&config, &config.home, pythonHome);
-
-		putenv(("PYTHONPATH=" + std::string(pyHome) + "/python312.zip;" + std::string(pyHome) +
-			"/Lib/site-packages;" + std::string(pyHome))
-			       .data());
-
-		const char *pyhome_env = getenv("PYTHONHOME");
-		const char *pypath_env = getenv("PYTHONPATH");
-		blog(LOG_INFO, "PYTHONHOME env: %s, PYTHONPATH env: %s", pyhome_env ? pyhome_env : "(null)",
-		     pypath_env ? pypath_env : "(null)");
-
-#ifndef _WIN32
-		PyConfig_SetString(&config, &config.pythonpath_env, pythonPath);
-#endif
-
-		PyStatus status = Py_InitializeFromConfig(&config);
-		if (PyStatus_Exception(status) || !Py_IsInitialized()) {
-
-			blog(LOG_INFO, "Failed to initialize Python interpreter: %s", status.err_msg);
-			blog(LOG_INFO, "Failed to initialize Python interpreter: %s", status.func);
-			PyConfig_Clear(&config);
-			if (PyStatus_IsExit(status)) {
-				blog(LOG_INFO, "Failed to initialize Python interpreter: %d", status.exitcode);
+			if (!process->waitForFinished(5000)) {
+				process->kill();
+				process->waitForFinished(2000);
 			}
-			return;
 		}
-
-		PyConfig_Clear(&config);
+		process->deleteLater();
 	}
-
-	if (Py_IsInitialized()) {
-
-		PyObject *pModule = PyImport_ImportModule("draw");
-		if (!pModule) {
-			blog(LOG_ERROR, "Failed to import draw module; printing Python error:");
-
-			// Try to get a full formatted traceback using the Python traceback module
-			PyObject *ptype = nullptr, *pvalue = nullptr, *ptraceback = nullptr;
-			PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-			PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-
-			PyObject *traceback_mod = PyImport_ImportModule("traceback");
-			if (traceback_mod) {
-				PyObject *format_exception = PyObject_GetAttrString(traceback_mod, "format_exception");
-				if (format_exception && PyCallable_Check(format_exception)) {
-					PyObject *exc_list = PyObject_CallFunctionObjArgs(
-						format_exception, ptype ? ptype : Py_None, pvalue ? pvalue : Py_None,
-						ptraceback ? ptraceback : Py_None, NULL);
-					if (exc_list) {
-						PyObject *sep = PyUnicode_FromString("");
-						PyObject *exc_str = PyUnicode_Join(sep, exc_list);
-						if (exc_str) {
-							const char *err_s = PyUnicode_AsUTF8(exc_str);
-							blog(LOG_ERROR, "Python exception:\n%s",
-							     err_s ? err_s : "(null)");
-							Py_XDECREF(exc_str);
-						} else {
-							// fallback
-							PyErr_Print();
-						}
-						Py_XDECREF(sep);
-						Py_XDECREF(exc_list);
-					} else {
-						PyErr_Print();
-					}
-					Py_XDECREF(format_exception);
-				} else {
-					PyErr_Print();
-				}
-				Py_XDECREF(traceback_mod);
-			} else {
-				// If importing traceback failed, fall back to PyErr_Print
-				PyErr_Print();
-			}
-
-			Py_XDECREF(ptype);
-			Py_XDECREF(pvalue);
-			Py_XDECREF(ptraceback);
-
-			blog(LOG_ERROR, "Try to locate where Python would load 'draw' from");
-			PyObject *importlib_util = PyImport_ImportModule("importlib.util");
-			if (importlib_util) {
-				PyObject *find_spec = PyObject_GetAttrString(importlib_util, "find_spec");
-				if (find_spec && PyCallable_Check(find_spec)) {
-					PyObject *spec = PyObject_CallFunction(find_spec, "s", "draw");
-					if (spec && spec != Py_None) {
-						PyObject *origin = PyObject_GetAttrString(spec, "origin");
-						if (origin) {
-							const char *origin_s = PyUnicode_AsUTF8(origin);
-							blog(LOG_INFO, "draw spec origin: %s",
-							     origin_s ? origin_s : "(null)");
-							Py_XDECREF(origin);
-						} else {
-							blog(LOG_INFO, "draw spec has no origin");
-						}
-						Py_XDECREF(spec);
-					} else {
-						blog(LOG_INFO, "draw spec not found or is None");
-					}
-				}
-				Py_XDECREF(find_spec);
-				Py_XDECREF(importlib_util);
-			}
-			PyObject *sys = PyImport_ImportModule("sys");
-			if (sys) {
-				PyObject *path = PyObject_GetAttrString(sys, "path");
-				if (path) {
-					PyObject *repr = PyObject_Repr(path);
-					if (repr) {
-						const char *s = PyUnicode_AsUTF8(repr);
-						blog(LOG_INFO, "sys.path: %s", s ? s : "(null)");
-						Py_XDECREF(repr);
-					}
-					Py_XDECREF(path);
-				}
-				Py_XDECREF(sys);
-			}
-			return;
-		}
-		Py_XDECREF(pModule);
-		blog(LOG_INFO, "Python interpreter initialized successfully");
-#ifdef _WIN32
-		PyEval_SaveThread();
-#endif
-		this->start_button->setEnabled(true);
-	} else {
-		blog(LOG_INFO, "Failed to initialize Python interpreter");
-	}
+	if (any)
+		AppendLog("■ Stopping detectors…");
+	this->ready_count = 0;
+	this->launched_count = 0;
 }
