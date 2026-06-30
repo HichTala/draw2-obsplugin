@@ -93,32 +93,20 @@ SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent)
 	browse_layout->addWidget(this->browse_button);
 	layout->addLayout(browse_layout);
 
-	const char *plugin_dir = get_plugin_path();
-	QDir dir(((plugin_dir + std::string("/decklists/")).data()));
+	QDir dir(get_decklists_path());
 	QFileInfoList files = dir.entryInfoList(QDir::Files);
-	this->deck_list1->setMaximumWidth(125);
-	this->deck_list2->setMaximumWidth(125);
-	this->deck_list3->setMaximumWidth(125);
-	this->deck_list1->addItem(obs_module_text("none"));
-	this->deck_list2->addItem(obs_module_text("none"));
-	this->deck_list3->addItem(obs_module_text("none"));
-	for (const QFileInfo &file : files) {
-		this->deck_list1->addItem(file.fileName());
-		this->deck_list2->addItem(file.fileName());
-		this->deck_list3->addItem(file.fileName());
+	QComboBox *combos[3] = {this->deck_list1, this->deck_list2, this->deck_list3};
+	QString saved[3] = {deck_list_path1, deck_list_path2, deck_list_path3};
+	for (int i = 0; i < 3; i++) {
+		combos[i]->setMaximumWidth(125);
+		combos[i]->addItem(obs_module_text("none"));
+		for (const QFileInfo &file : files)
+			combos[i]->addItem(file.fileName());
+		int idx = combos[i]->findText(saved[i], Qt::MatchExactly);
+		if (idx != -1)
+			combos[i]->setCurrentIndex(idx);
 	}
-	int index1 = this->deck_list1->findText(deck_list_path1, Qt::MatchExactly);
-	int index2 = this->deck_list2->findText(deck_list_path2, Qt::MatchExactly);
-	int index3 = this->deck_list3->findText(deck_list_path3, Qt::MatchExactly);
-	if (index1 != -1) {
-		this->deck_list1->setCurrentIndex(index1);
-	}
-	if (index2 != -1) {
-		this->deck_list2->setCurrentIndex(index2);
-	}
-	if (index3 != -1) {
-		this->deck_list3->setCurrentIndex(index3);
-	}
+
 	auto *decklist_layout = new QHBoxLayout();
 	decklist_layout->addWidget(this->deck_list1);
 	decklist_layout->addWidget(this->deck_list2);
@@ -143,6 +131,14 @@ SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent)
 	confidence_layout->addWidget(confidence_value_label);
 	confidence_layout->addWidget(this->confidence_slider);
 	layout->addLayout(confidence_layout);
+
+	// Opt-in detector-input features (off by default).
+	auto *features_label = new QLabel(obs_module_text("advanced_features"), this);
+	layout->addWidget(features_label);
+	this->feature_crop->setChecked(settings.value("feature_crop", false).toBool());
+	this->feature_rotate->setChecked(settings.value("feature_rotate", false).toBool());
+	layout->addWidget(this->feature_crop);
+	layout->addWidget(this->feature_rotate);
 
 	this->ok_button->setProperty("class", "QPushButton");
 	this->cancel_button->setProperty("class", "QPushButton");
@@ -176,9 +172,7 @@ void SettingsDialog::PythonBrowseButtonClicked()
 
 void SettingsDialog::BrowseButtonClicked()
 {
-	const char *plugin_dir = get_plugin_path();
-	blog(LOG_INFO, "%s", plugin_dir);
-	open_folder(plugin_dir + std::string("/decklists/"));
+	open_folder(std::string(get_decklists_path()));
 }
 
 void SettingsDialog::OkButtonClicked()
@@ -193,6 +187,8 @@ void SettingsDialog::OkButtonClicked()
 	settings.setValue("minimum_screen_time", this->minimum_screen_time->value());
 	settings.setValue("minimum_out_of_screen_time", this->minimum_out_of_screen_time->value());
 	settings.setValue("confidence_slider", this->confidence_slider->value());
+	settings.setValue("feature_crop", this->feature_crop->isChecked());
+	settings.setValue("feature_rotate", this->feature_rotate->isChecked());
 	this->close();
 }
 
