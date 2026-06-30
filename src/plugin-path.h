@@ -9,4 +9,8 @@
 
 const char *get_plugin_path();
 
+// Stable, per-user directory for deck lists (lives in OBS' plugin_config, NOT
+// inside the plugin bundle) so user .ydk files survive plugin updates/reinstalls.
+const char *get_decklists_path();
+
 #endif //DRAW2_OBSPLUGIN_PLUGIN_PATH_H

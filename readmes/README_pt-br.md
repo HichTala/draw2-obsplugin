@@ -14,7 +14,7 @@
 [![Medium](https://img.shields.io/badge/-Medium-12100E?style=flat&logo=medium&labelColor=555)](https://medium.com/@hich.tala.phd/how-i-trained-again-my-model-to-detect-and-recognise-a-wide-range-of-yu-gi-oh-cards-5c567a320b0a)
 [![WandB](https://img.shields.io/badge/visualize_in-W%26B-yellow?logo=weightsandbiases&color=%23FFBE00)](https://wandb.ai/hich_/draw)
 
-[🇬🇧 English](../README.md) | [🇫🇷 Français](README_fr.md) | [🇯🇵 日本語](README_jp.md)
+[🇬🇧 English](../README.md) | [🇫🇷 Français](README_fr.md) | [🇯🇵 日本語](README_jp.md) | [🇪🇸 Español](README_es.md)
 
 
 </div>
@@ -108,6 +108,8 @@ Não sou tão familiar com o OBS no MacOS para fornecer um guida de instalação
 O plugin é capaz de compilar com sucesso no MacOS mas não testei ele completamente.
 Se você tem experiência com plugins do OBS no MacOS e gostaria de contribuir com um guia de instalação, 
 sinta-se livre para enviar um pull request.
+
+> ℹ️ No macOS, o backend Python roda como um **processo separado** (o plugin não embute mais um interpretador). Em **Select Python installation**, aponte para um prefixo Python que tenha o pacote `draw` instalado a partir do branch **`obs-plugin`** (`pip install "git+https://github.com/HichTala/draw2@obs-plugin"`). Qualquer Python 3 recente funciona — não precisa corresponder à versão do plugin. Veja a seção macOS do [README em inglês](../README.md) para os passos completos de compilação e configuração.
 </details>
 
 ### 🚀 Uso
@@ -122,6 +124,20 @@ Quando o plugin está instalado e os "model weights" estão baixados, você pode
     - **Minimum Screen Time**: O tempo mínimo que uma carta é exibida.
     - **Confidence Threshold**: Definir o nível de confiança mínima para a detecção de uma carta. Detecções abaixo desse limite 
       serão ignoradas.
+    - **Advanced features** (desativadas por padrão): dois ajustes opcionais da entrada do detector que afetam
+      apenas o que o detector vê, sem impacto na sua saída ao vivo. Ative aqui e configure os valores na fonte
+      `Draw Display`:
+      - **Enable detector input crop** — adiciona os campos **Crop (Left/Top/Right/Bottom, px)** à fonte, para
+        focar a detecção na região onde as cartas são colocadas.
+      - **Enable 180° input rotation** — adiciona o botão **Rotate input 180°** à fonte, para câmera montada de
+        cabeça para baixo.
+      - Quando qualquer uma das duas está ativada, a fonte também ganha o botão **Preview detector input**:
+        ative-o para que a fonte exiba o quadro recortado/rotacionado que ela envia ao detector (para ajustar
+        o recorte direto no preview da fonte) e desative-o para voltar a exibir as cartas detectadas.
+    - **Enable debug logging** (desativado por padrão): exibe diagnósticos detalhados — o log do painel mostra
+      o lançamento exato do backend (caminhos de deck resolvidos, canal, limites) e cada linha do backend sem
+      filtro, e o log do OBS recebe os detalhes de captura (fonte de entrada, dimensões, recorte/rotação). Útil
+      quando a detecção não está se comportando como esperado.
 3. O plugin irá fornecer uma nova fonte chamada `Draw Display`. Você pode adicioná-la a sua cena como qualquer outra fonte.
    Essa fonte irá exibir as cartas detectadas na tela. Você pode escolher de qual fonte/cena detectar as cartas.
 4. Clique no botão `Start DRAW` para começar o processo de detecção. O plugin irá começar a detectar cartas em tempo real

@@ -11,7 +11,7 @@
 [![Medium](https://img.shields.io/badge/-Medium-12100E?style=flat&logo=medium&labelColor=555)](https://medium.com/@hich.tala.phd/how-i-trained-again-my-model-to-detect-and-recognise-a-wide-range-of-yu-gi-oh-cards-5c567a320b0a)
 [![WandB](https://img.shields.io/badge/visualize_in-W%26B-yellow?logo=weightsandbiases&color=%23FFBE00)](https://wandb.ai/hich_/draw)
 
-[🇬🇧 English](../README.md) | [🇫🇷 Français](README_fr.md) | [🇧🇷 Português](README_pt-br.md)
+[🇬🇧 English](../README.md) | [🇫🇷 Français](README_fr.md) | [🇧🇷 Português](README_pt-br.md) | [🇪🇸 Español](README_es.md)
 
 </div>
 
@@ -66,6 +66,8 @@ OSに応じた手順に従ってセットアップしてください。
 <summary>🍏 MacOS</summary>
 
 MacOSでのOBSプラグインに詳しくないため、信頼性のあるインストールガイドを提供できません。MacOSでのコンパイルは成功していますが、十分なテストを行っていません。MacOSでのOBSプラグインに詳しい方がいれば、インストールガイドの作成にぜひ協力ください。Pull Requestをお待ちしています。
+
+> ℹ️ macOSでは、Pythonバックエンドは**別プロセス**として動作します（プラグインはインタープリタを埋め込みません）。**Select Python installation** に、`draw` パッケージを **`obs-plugin`** ブランチからインストールした Python プレフィックスを指定してください（`pip install "git+https://github.com/HichTala/draw2@obs-plugin"`）。最近の Python 3 であれば動作し、プラグインのバージョンに一致させる必要はありません。ビルドとセットアップの詳細は[英語版README](../README.md)のmacOSセクションを参照してください。
 </details>
 
 ### 🚀 使い方
@@ -78,6 +80,14 @@ MacOSでのOBSプラグインに詳しくないため、信頼性のあるイン
    * **画面外表示の最小時間**:検出されたカードが再表示されるまでの最小時間を設定します。
    * **画面表示の最小時間**:カードが表示される最小時間を設定します。
    * **信頼度の閾値**:カード検出の最小信頼度を設定します。この閾値以下の検出は無視されます。
+   * **Advanced features**（デフォルトでオフ）：ライブ出力には影響せず、検出器が見る映像のみに作用する2つのオプション設定です。ここで有効にし、`Draw Display` ソースで値を設定してください：
+     * **Enable detector input crop** — カードが置かれる領域に検出を絞り込むため、ソースに **Crop (Left/Top/Right/Bottom, px)** フィールドを追加します。
+     * **Enable 180° input rotation** — カメラが逆さまに取り付けられている場合のために、ソースに **Rotate input 180°** トグルを追加します。
+     * どちらかが有効になると、ソースに **Preview detector input** トグルも追加されます：オンにするとソースが検出器に送るクロップ／回転済みのフレームを表示し（ソースのプレビューで直接クロップを調整できます）、オフにすると検出されたカードの表示に戻ります。
+   * **Enable debug logging**（デフォルトでオフ）：詳細な診断情報を表示します — ドックのログにはバックエンドの
+     起動詳細（解決済みデッキパス、チャンネル、閾値）とバックエンドの全ログ行がフィルタなしで表示され、
+     OBSログにはキャプチャの詳細（入力ソース、サイズ、クロップ／回転）が記録されます。
+     検出が期待通りに動作しない場合に役立ちます。
 3. プラグインは `Draw Display` という新しいソースを提供します。シーンに追加すると、検出されたカードが画面上に表示されます。どのソースやシーンからカードを検出するか選択できます。
 4. `Start DRAW` ボタンをクリックして検出を開始します。プラグインはリアルタイムでカードを検出し、`Draw Display` ソースを使って画面に表示します。
 5. プラグインをお楽しみください！
