@@ -8,6 +8,7 @@
 #include "DrawDock.hpp"
 #include "SettingsDialog.hpp"
 
+#include <QCheckBox>
 #include <QDialog>
 #include <QFileDialog>
 #include <QLineEdit>
@@ -24,13 +25,35 @@ public:
 
 private:
 	QLineEdit *python_path = new QLineEdit();
+	// Player 1 deck lists
 	QComboBox *deck_list1 = new QComboBox();
 	QComboBox *deck_list2 = new QComboBox();
 	QComboBox *deck_list3 = new QComboBox();
+	// Player 2 deck lists
+	QComboBox *deck_list1_p2 = new QComboBox();
+	QComboBox *deck_list2_p2 = new QComboBox();
+	QComboBox *deck_list3_p2 = new QComboBox();
 	QComboBox *model_choice = new QComboBox();
 	QSpinBox *minimum_out_of_screen_time = new QSpinBox;
 	QSpinBox *minimum_screen_time = new QSpinBox;
 	QSlider *confidence_slider = new QSlider(Qt::Horizontal);
+	// Deck-file selectors grouped so they can be hidden in remote mode.
+	QWidget *file_section = new QWidget();
+	QWidget *player2_section = new QWidget();
+	// Opt-in features (off by default). See feature_flags.h.
+	QCheckBox *feature_channel = new QCheckBox(obs_module_text("feature_channel"));
+	QCheckBox *feature_crop = new QCheckBox(obs_module_text("feature_crop"));
+	QCheckBox *feature_rotate = new QCheckBox(obs_module_text("feature_rotate"));
+	QCheckBox *feature_debug = new QCheckBox(obs_module_text("feature_debug"));
+	QCheckBox *feature_remote_deck = new QCheckBox(obs_module_text("feature_remote_deck"));
+	// Remote decklist (opt-in): one URL per player, replacing the file selectors.
+	QLineEdit *deck_url1 = new QLineEdit();
+	QLineEdit *deck_url1_p2 = new QLineEdit();
+	QLineEdit *remote_header_name = new QLineEdit();
+	QLineEdit *remote_header_value = new QLineEdit();
+	QPushButton *import_url_button = new QPushButton(obs_module_text("import_from_url"));
+	QWidget *remote_section = new QWidget();
+	QWidget *remote_p2_row = new QWidget();
 	QPushButton *python_browse_button = new QPushButton(obs_module_text("browse"));
 	QPushButton *browse_button = new QPushButton(obs_module_text("open_folder"));
 	QPushButton *ok_button = new QPushButton(obs_module_text("ok"));
@@ -46,6 +69,7 @@ private slots:
 	void BrowseButtonClicked();
 	void OkButtonClicked();
 	void CancelButtonClicked();
+	void ImportUrlButtonClicked();
 };
 
 #endif //SETTINGSPOPUP_HPP

@@ -14,7 +14,7 @@
 [![Medium](https://img.shields.io/badge/-Medium-12100E?style=flat&logo=medium&labelColor=555)](https://medium.com/@hich.tala.phd/how-i-trained-again-my-model-to-detect-and-recognise-a-wide-range-of-yu-gi-oh-cards-5c567a320b0a)
 [![WandB](https://img.shields.io/badge/visualize_in-W%26B-yellow?logo=weightsandbiases&color=%23FFBE00)](https://wandb.ai/hich_/draw)
 
-[🇬🇧 English](../README.md) | [🇫🇷 Français](README_fr.md) | [🇯🇵 日本語](README_jp.md)
+[🇬🇧 English](../README.md) | [🇫🇷 Français](README_fr.md) | [🇯🇵 日本語](README_jp.md) | [🇪🇸 Español](README_es.md)
 
 
 </div>
@@ -108,6 +108,8 @@ Não sou tão familiar com o OBS no MacOS para fornecer um guida de instalação
 O plugin é capaz de compilar com sucesso no MacOS mas não testei ele completamente.
 Se você tem experiência com plugins do OBS no MacOS e gostaria de contribuir com um guia de instalação, 
 sinta-se livre para enviar um pull request.
+
+> ℹ️ No macOS, o backend Python roda como um **processo separado** (o plugin não embute mais um interpretador). Em **Select Python installation**, aponte para um prefixo Python que tenha o pacote `draw` instalado a partir do branch **`obs-plugin`** (`pip install "git+https://github.com/HichTala/draw2@obs-plugin"`). Qualquer Python 3 recente funciona — não precisa corresponder à versão do plugin. Veja a seção macOS do [README em inglês](../README.md) para os passos completos de compilação e configuração.
 </details>
 
 ### 🚀 Uso
@@ -116,14 +118,51 @@ Quando o plugin está instalado e os "model weights" estão baixados, você pode
 
 1. Abra o menu `Painéis` e selecione `Draw 2` para ativar o painel do plugin.
 2. No painel do Draw 2, você pode configurar os ajustes clicando no ícone de engrenagem ao lado do botão `Start DRAW`:
-    - **Select Deck List**: Escolha o arquivo de decklist que contenha as cartas que você quer detectar. 3 decklists podem ser usadas ao mesmo tempo. 
-      Para adicionar novas decklists, você pode clicar no botão `Open Folder` e arrastar suas decklists (em formato .ydk) na pasta que foi aberta.
+    - **Select Deck Lists**: Escolha os arquivos de decklist que contenham as cartas que você quer detectar — até 3. Para adicionar decklists, clique em `Open Folder` e arraste seus arquivos `.ydk` para a pasta que foi aberta.
     - **Minimum Out of Screen Time**: O tempo mínimo que uma carta recém detectada pode ser exibida de novo.
     - **Minimum Screen Time**: O tempo mínimo que uma carta é exibida.
     - **Confidence Threshold**: Definir o nível de confiança mínima para a detecção de uma carta. Detecções abaixo desse limite 
       serão ignoradas.
+    - **Advanced features** (desativadas por padrão): dois ajustes opcionais da entrada do detector que afetam
+      apenas o que o detector vê, sem impacto na sua saída ao vivo. Ative aqui e configure os valores na fonte
+      `Draw Display`:
+      - **Enable two players** — adiciona um conjunto de decklists do **Player 2** e executa um **detector separado por jogador**, permitindo processar dois jogadores ao mesmo tempo. Deixe desativado para uma configuração normal de um único jogador.
+      - **Enable detector input crop** — adiciona os campos **Crop (Left/Top/Right/Bottom, px)** à fonte, para
+        focar a detecção na região onde as cartas são colocadas.
+      - **Enable 180° input rotation** — adiciona o botão **Rotate input 180°** à fonte, para câmera montada de
+        cabeça para baixo.
+      - Quando qualquer uma das duas está ativada, a fonte também ganha o botão **Preview detector input**:
+        ative-o para que a fonte exiba o quadro recortado/rotacionado que ela envia ao detector (para ajustar
+        o recorte direto no preview da fonte) e desative-o para voltar a exibir as cartas detectadas.
+    - **Enable debug logging** (desativado por padrão): exibe diagnósticos detalhados — o log do painel mostra
+      o lançamento exato do backend (caminhos de deck resolvidos, canal, limites) e cada linha do backend sem
+      filtro, e o log do OBS recebe os detalhes de captura (fonte de entrada, dimensões, recorte/rotação). Útil
+      quando a detecção não está se comportando como esperado.
+    - **Enable remote decklist** — carrega um deck a partir de uma URL HTTP(S) em vez de um arquivo `.ydk` local; veja a nota abaixo da fonte `Draw Display`.
 3. O plugin irá fornecer uma nova fonte chamada `Draw Display`. Você pode adicioná-la a sua cena como qualquer outra fonte.
    Essa fonte irá exibir as cartas detectadas na tela. Você pode escolher de qual fonte/cena detectar as cartas.
+   Com o modo de dois jogadores ativado, use a propriedade **Detector / Player** da fonte para escolher de qual detector ela lê (**Player 1** ou **Player 2**); adicione um `Draw Display` por jogador para exibir ambos ao mesmo tempo.
+
+   > 💡 O plugin também pode carregar uma decklist a partir de uma **URL HTTP(S)** em vez de um arquivo `.ydk` local —
+   > útil quando sua lista de cartas é servida por uma API remota ou sistema de gerenciamento de torneios. Vem
+   > **desativada por padrão** — ative **Enable remote decklist** nas configurações do Draw 2 (*Recursos avançados*);
+   > as URLs são configuradas depois em uma aba dedicada **Decklist**.
+   >
+   > Dois modos estão disponíveis após a ativação:
+   > - **Import deck from URL…** (botão na aba **Decklist**) — busca a URL uma única vez e salva o resultado como um
+   >   `.ydk` normal na pasta de decklists, assim você pode usá-lo como um deck de arquivo comum.
+   > - **Campo de URL por jogador** — uma URL por jogador (Player 1, mais Player 2 no modo de dois jogadores). Enquanto a
+   >   opção remota está ativa, eles substituem os seletores de arquivo; a URL é buscada ao vivo no Start DRAW. Em caso de
+   >   qualquer falha, aquele jogador simplesmente começa sem filtro de deck.
+   >
+   > Formatos de resposta aceitos pelo servidor: array JSON de IDs de carta (passcodes); objeto JSON
+   > `{ "main": [...], "extra": [...], "side": [...] }`; texto `.ydk` bruto; ou texto simples contendo IDs numéricos.
+   >
+   > Um cabeçalho de autenticação opcional (nome + valor, ex.: `Authorization` / `Bearer …`) pode ser configurado e
+   > é enviado com cada requisição.
+   >
+   > ⚠️ As URLs e o valor do cabeçalho são armazenados em texto simples no QSettings, como todas as outras
+   > configurações do plugin — evite armazenar segredos de longa duração ali.
 4. Clique no botão `Start DRAW` para começar o processo de detecção. O plugin irá começar a detectar cartas em tempo real
    e exibí-las na tela usando a fonte `Draw Display`. O plugin irá começar a detectar a partir do momento que você vir o botão `Stop DRAW`. 
    Se não aparecer, algo deu errado.
