@@ -1,10 +1,12 @@
 <div align="center">
     <p>
-        <img src="https://raw.githubusercontent.com/HichTala/draw2/refs/heads/main/figures/banner-draw.png" alt="DRAW Banner">
+        <img src="https://raw.githubusercontent.com/HichTala/draw2/refs/heads/main/docs/assets/banner.png" alt="DRAW Banner">
     </p>
 
 
 <div>
+
+[![Web Interface](https://img.shields.io/badge/🌐_Web_Interface-Try_It_Now-blue)](https://hichtala.github.io/draw2)
 
 [![DRAW2 Workflow](https://github.com/HichTala/draw2-plugin/actions/workflows/push.yaml/badge.svg)](https://github.com/HichTala/draw2-plugin/actions/workflows/push.yaml)
 [![Licence](https://img.shields.io/pypi/l/ultralytics)](../LICENSE)
@@ -149,7 +151,7 @@ Une fois le plugin installé et les poids du modèle téléchargés, vous pouvez
 
 Voici un petit aperçu :)
 <div align="center">
-    <img src="https://raw.githubusercontent.com/HichTala/draw2/refs/heads/main/figures/overview.gif" width="960" height="540" />
+    <img src="https://raw.githubusercontent.com/HichTala/draw2/refs/heads/main/docs/assets/overview.gif" width="960" height="540" />
 </div>
 
 ---
