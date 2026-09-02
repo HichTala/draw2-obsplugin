@@ -165,11 +165,11 @@ at [hich.tala.phd@gmail.com](mailto:hich.tala.phd@gmail.com).
 ## <div align="center">⭐Star History</div>
 
 <div align="center">
-<a href="https://www.star-history.com/#hichtala/draw2&type=date&legend=top-left">
+<a href="https://www.star-history.com/?repos=HichTala%2Fdraw2&type=date&legend=top-left">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=hichtala/draw2&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=hichtala/draw2&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=hichtala/draw2&type=date&legend=top-left" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=HichTala/draw2&type=date&theme=dark&legend=top-left&sealed_token=Tj24ueb9rFzr_2PF0RNMdSlbPvsVOwdhhTBjutgQ1SUYji8RrcmHiv_ocH9Awcj-YtsbRvsN3HQ3CXrdvIlH9__zptdgBmaVrYYtCTtq8NSwB3pc8qUZcGcM0Ez6xCI8WWYDgM0H9ZiRDUrW24Rmut3k2YSh3Oe003GY7SfNSXCDbUniUCvwNbTd5ejR" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=HichTala/draw2&type=date&legend=top-left&sealed_token=Tj24ueb9rFzr_2PF0RNMdSlbPvsVOwdhhTBjutgQ1SUYji8RrcmHiv_ocH9Awcj-YtsbRvsN3HQ3CXrdvIlH9__zptdgBmaVrYYtCTtq8NSwB3pc8qUZcGcM0Ez6xCI8WWYDgM0H9ZiRDUrW24Rmut3k2YSh3Oe003GY7SfNSXCDbUniUCvwNbTd5ejR" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=HichTala/draw2&type=date&legend=top-left&sealed_token=Tj24ueb9rFzr_2PF0RNMdSlbPvsVOwdhhTBjutgQ1SUYji8RrcmHiv_ocH9Awcj-YtsbRvsN3HQ3CXrdvIlH9__zptdgBmaVrYYtCTtq8NSwB3pc8qUZcGcM0Ez6xCI8WWYDgM0H9ZiRDUrW24Rmut3k2YSh3Oe003GY7SfNSXCDbUniUCvwNbTd5ejR" />
  </picture>
 </a>
 </div>
