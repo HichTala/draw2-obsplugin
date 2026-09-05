@@ -1,10 +1,12 @@
 <div align="center">
     <p>
-        <img src="https://raw.githubusercontent.com/HichTala/draw2/refs/heads/main/figures/banner-draw.png" alt="DRAW Banner">
+        <img src="https://raw.githubusercontent.com/HichTala/draw2/refs/heads/main/docs/assets/banner.png" alt="DRAW Banner">
     </p>
 
 
 <div>
+
+[![Web Interface](https://img.shields.io/badge/🌐_Web_Interface-Try_It_Now-blue)](https://hichtala.github.io/draw2)
 
 [![DRAW2 Workflow](https://github.com/HichTala/draw2-plugin/actions/workflows/push.yaml/badge.svg)](https://github.com/HichTala/draw2-plugin/actions/workflows/push.yaml)
 [![Licence](https://img.shields.io/pypi/l/ultralytics)](../LICENSE)
@@ -32,7 +34,7 @@ Esse projeto é licenciado sob [GNU Affero General Public License v3.0](LICENCE)
 ---
 ## <div align="center">📰 News</div>
 
-> 🃏 **Latest card pool:** `BLZD` --- last updated `18-05-2026`  
+> 🃏 **Latest card pool:** `CORI` --- last updated `13-06-2026`  
 > 🔧 **Latest app version:** `0.2.1-beta` --- last updated `01-06-2026`
 
 <table>
@@ -40,6 +42,11 @@ Esse projeto é licenciado sob [GNU Affero General Public License v3.0](LICENCE)
     <th>Date</th>
     <th>Type</th>
     <th>Description</th>
+  </tr>
+  <tr>
+    <td><b>13-06-2026</b></td>
+    <td>🃏 Card Pool</td>
+    <td>Card pool updated --- now supports cards up to <i>Chaos Origins</i></td>
   </tr>
   <tr>
     <td><b>01-06-2026</b></td>
@@ -133,7 +140,7 @@ Quando o plugin está instalado e os "model weights" estão baixados, você pode
 
 Aqui está uma pequena prévia :)
 <div align="center">
-    <img src="https://raw.githubusercontent.com/HichTala/draw2/refs/heads/main/figures/overview.gif" width="960" height="540" />
+    <img src="https://raw.githubusercontent.com/HichTala/draw2/refs/heads/main/docs/assets/overview.gif" width="960" height="540" />
 </div>
 
 ---

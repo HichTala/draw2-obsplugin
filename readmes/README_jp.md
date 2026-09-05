@@ -1,7 +1,9 @@
 <div align="center">
     <p>
-        <img src="https://raw.githubusercontent.com/HichTala/draw2/refs/heads/main/figures/banner-draw.png" alt="DRAW Banner">
+        <img src="https://raw.githubusercontent.com/HichTala/draw2/refs/heads/main/docs/assets/banner.png" alt="DRAW Banner">
     </p>
+
+[![Web Interface](https://img.shields.io/badge/🌐_Web_Interface-Try_It_Now-blue)](https://hichtala.github.io/draw2)
 
 [![DRAW2 Workflow](https://github.com/HichTala/draw2-plugin/actions/workflows/push.yaml/badge.svg)](https://github.com/HichTala/draw2-plugin/actions/workflows/push.yaml)
 [![Licence](https://img.shields.io/pypi/l/ultralytics)](../LICENSE)
@@ -24,7 +26,7 @@ Pythonバックエンドのプロジェクトは[こちら](https://github.com/H
 ---
 ## <div align="center">📰 ニュース</div>
 
-> 🃏 **対応している最新の拡張機能:** `MZMU` --- 最終更新日 `06-04-2026`  
+> 🃏 **対応している最新の拡張機能:** `CORI` --- 最終更新日 `13-06-2026`  
 > 🔧 **最新版:** `0.2.1-beta` --- 最終更新日 `01-06-2026`
 
 ---
@@ -86,7 +88,7 @@ MacOSでのOBSプラグインに詳しくないため、信頼性のあるイン
 
 ちょっとだけご紹介します :)
 <div align="center">
-    <img src="https://raw.githubusercontent.com/HichTala/draw2/refs/heads/main/figures/overview.gif" width="960" height="540" />
+    <img src="https://raw.githubusercontent.com/HichTala/draw2/refs/heads/main/docs/assets/overview.gif" width="960" height="540" />
 </div>
 
 ---

@@ -1,10 +1,12 @@
 <div align="center">
     <p>
-        <img src="https://raw.githubusercontent.com/HichTala/draw2/refs/heads/main/figures/banner-draw.png" alt="DRAW Banner">
+        <img src="https://raw.githubusercontent.com/HichTala/draw2/refs/heads/main/docs/assets/banner.png" alt="DRAW Banner">
     </p>
 
 
 <div>
+
+[![Web Interface](https://img.shields.io/badge/🌐_Web_Interface-Try_It_Now-blue)](https://hichtala.github.io/draw2)
 
 [![DRAW2 Workflow](https://github.com/HichTala/draw2-plugin/actions/workflows/push.yaml/badge.svg)](https://github.com/HichTala/draw2-plugin/actions/workflows/push.yaml)
 [![Licence](https://img.shields.io/pypi/l/ultralytics)](../LICENSE)
@@ -34,7 +36,7 @@ bienvenues.
 ---
 ## <div align="center">📰 News</div>
 
-> 🃏 **Dernière extension supportée:** `BLZD` --- mise à jour le `18-05-2026`  
+> 🃏 **Dernière extension supportée:** `CORI` --- mise à jour le `13-06-2026`  
 > 🔧 **Dernière version:** `0.2.1-beta` --- mise à jour le `01-06-2026`
 
 <table>
@@ -42,6 +44,11 @@ bienvenues.
     <th>Date</th>
     <th>Type</th>
     <th>Description</th>
+  </tr>
+  <tr>
+    <td><b>13-06-2026</b></td>
+    <td>🃏 Pool de cartes</td>
+    <td>Mise à jour du pool de cartes --- prend désormais en charge les cartes jusqu'à <i>Les Origines du Chaos</i></td>
   </tr>
   <tr>
     <td><b>01-06-2026</b></td>
@@ -146,7 +153,7 @@ Une fois le plugin installé et les poids du modèle téléchargés, vous pouvez
 
 Voici un petit aperçu :)
 <div align="center">
-    <img src="https://raw.githubusercontent.com/HichTala/draw2/refs/heads/main/figures/overview.gif" width="960" height="540" />
+    <img src="https://raw.githubusercontent.com/HichTala/draw2/refs/heads/main/docs/assets/overview.gif" width="960" height="540" />
 </div>
 
 ---
