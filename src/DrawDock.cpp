@@ -64,9 +64,12 @@ void DrawDock::StartButtonClicked()
 		this->start_button->setText(obs_module_text("starting_draw"));
 		StartPythonDraw();
 	} else {
+		blog(LOG_INFO, "button clicked");
 		StopPythonDraw();
+		blog(LOG_INFO, "python stopped");
 		this->start_button->setText(obs_module_text("start_draw"));
 		this->settings_button->setEnabled(true);
+		blog(LOG_INFO, "After click");
 	}
 }
 
@@ -132,6 +135,7 @@ void DrawDock::StartPythonDraw()
 				PyTuple_SetItem(args, 7, PyLong_FromLong(confidence_value));
 
 				PyObject *result = PyObject_CallObject(pFunc, args);
+				blog(LOG_INFO, "pyobject called");
 				if (!result) {
 					blog(LOG_ERROR, "Draw2 python backend raised an exception");
 					PyErr_Print();
@@ -148,8 +152,11 @@ void DrawDock::StartPythonDraw()
 		} else {
 			blog(LOG_ERROR, "Failed to import draw module.");
 		}
+		blog(LOG_INFO, "pygilstate release");
 		PyGILState_Release(gstate);
+		blog(LOG_INFO, "pygilstate released");
 		this->running_flag.store(false);
+		blog(LOG_INFO, "end of thread");
 	});
 	std::thread([this]() {
 		for (int i = 0; i < 50000; ++i) {
@@ -180,8 +187,11 @@ void DrawDock::StopPythonDraw()
 		return;
 	this->should_run.store(false);
 
-	if (this->python_thread.joinable()) {
+	blog(LOG_INFO, "is python thread joinable");
+	if (this->python_thread.joinable()) {	
+		blog(LOG_INFO, "yes it is");
 		this->python_thread.join();
+		blog(LOG_INFO, "python thread joined");
 	}
 }
 
@@ -249,9 +259,10 @@ void DrawDock::initialize_python_interpreter()
 		PyConfig_SetString(&config, &config.executable, pythonExe);
 		PyConfig_SetString(&config, &config.home, pythonHome);
 
-		putenv(("PYTHONPATH=" + std::string(pyHome) + "/python312.zip;" + std::string(pyHome) +
-			"/Lib/site-packages;" + std::string(pyHome))
-			       .data());
+		static std::string pythonpath = "PYTHONPATH=" + std::string(pyHome) + "/python312.zip;" +
+		                                std::string(pyHome) + "/Lib/site-packages;" +
+		                                std::string(pyHome);
+		putenv(pythonpath.data());
 
 		const char *pyhome_env = getenv("PYTHONHOME");
 		const char *pypath_env = getenv("PYTHONPATH");
