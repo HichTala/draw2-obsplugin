@@ -24,18 +24,17 @@
 // stopped. No control capsules are used: lifecycle is driven by the process
 // itself (stop == terminate the process), and frames flow through the POSIX
 // shared memory that the Draw Display source already manages.
-static const char *kBackendScript =
-	"import sys\n"
-	"from draw.run import DrawSharedMemoryHandler\n"
-	"models = ['HichTala/draw2', 'HichTala/draw2-large']\n"
-	"DrawSharedMemoryHandler(\n"
-	"    model_id=models[int(sys.argv[1])],\n"
-	"    deck_list=sys.argv[2],\n"
-	"    minimum_out_of_screen_time=int(sys.argv[3]),\n"
-	"    minimum_screen_time=int(sys.argv[4]),\n"
-	"    confidence_threshold=int(sys.argv[5]),\n"
-	"    channel=sys.argv[6],\n"
-	")()\n";
+static const char *kBackendScript = "import sys\n"
+				    "from draw.run import DrawSharedMemoryHandler\n"
+				    "models = ['HichTala/draw2', 'HichTala/draw2-large']\n"
+				    "DrawSharedMemoryHandler(\n"
+				    "    model_id=models[int(sys.argv[1])],\n"
+				    "    deck_list=sys.argv[2],\n"
+				    "    minimum_out_of_screen_time=int(sys.argv[3]),\n"
+				    "    minimum_screen_time=int(sys.argv[4]),\n"
+				    "    confidence_threshold=int(sys.argv[5]),\n"
+				    "    channel=sys.argv[6],\n"
+				    ")()\n";
 
 DrawDock::DrawDock(QWidget *parent) : QWidget(parent)
 {
