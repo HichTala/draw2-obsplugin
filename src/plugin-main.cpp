@@ -21,6 +21,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <obs-module.h>
 #include <plugin-support.h>
 #include <plugin-path.h>
+#include <util/platform.h>
 
 #include "DrawDock.hpp"
 
@@ -56,4 +57,16 @@ void obs_module_unload(void)
 const char *get_plugin_path()
 {
 	return module_path;
+}
+
+const char *get_decklists_path()
+{
+	static char *decklists_path = nullptr;
+	if (!decklists_path) {
+		// e.g. ~/Library/Application Support/obs-studio/plugin_config/draw2-plugin/decklists
+		decklists_path = obs_module_config_path("decklists");
+		if (decklists_path)
+			os_mkdirs(decklists_path);
+	}
+	return decklists_path;
 }

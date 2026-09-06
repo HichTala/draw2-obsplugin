@@ -16,7 +16,7 @@
 [![Medium](https://img.shields.io/badge/-Medium-12100E?style=flat&logo=medium&labelColor=555)](https://medium.com/@hich.tala.phd/how-i-trained-again-my-model-to-detect-and-recognise-a-wide-range-of-yu-gi-oh-cards-5c567a320b0a)
 [![WandB](https://img.shields.io/badge/visualize_in-W%26B-yellow?logo=weightsandbiases&color=%23FFBE00)](https://wandb.ai/hich_/draw)
 
-[🇬🇧 English](../README.md) | [🇫🇷 Français](README_fr.md) | [🇯🇵 日本語](README_jp.md)
+[🇬🇧 English](../README.md) | [🇫🇷 Français](README_fr.md) | [🇯🇵 日本語](README_jp.md) | [🇪🇸 Español](README_es.md)
 
 
 </div>
@@ -115,6 +115,8 @@ Não sou tão familiar com o OBS no MacOS para fornecer um guida de instalação
 O plugin é capaz de compilar com sucesso no MacOS mas não testei ele completamente.
 Se você tem experiência com plugins do OBS no MacOS e gostaria de contribuir com um guia de instalação, 
 sinta-se livre para enviar um pull request.
+
+> ℹ️ No macOS, o backend Python roda como um **processo separado** (o plugin não embute mais um interpretador). Em **Select Python installation**, aponte para um prefixo Python que tenha o pacote `draw` instalado a partir do branch **`obs-plugin`** (`pip install "git+https://github.com/HichTala/draw2@obs-plugin"`). Qualquer Python 3 recente funciona — não precisa corresponder à versão do plugin. Veja a seção macOS do [README em inglês](../README.md) para os passos completos de compilação e configuração.
 </details>
 
 ### 🚀 Uso

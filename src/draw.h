@@ -12,6 +12,10 @@ enum input_type { INPUT_TYPE_SOURCE, INPUT_TYPE_SCENE };
 struct draw_source_data {
 	enum input_type input_type;
 
+	// Shared-memory pair id this source reads from. Part of the
+	// plugin<->backend addressing; defaults to 1 (single detector).
+	int channel;
+
 	obs_weak_source_t *source;
 
 	void *region;

@@ -24,6 +24,7 @@ public:
 
 private:
 	QLineEdit *python_path = new QLineEdit();
+	// Deck lists
 	QComboBox *deck_list1 = new QComboBox();
 	QComboBox *deck_list2 = new QComboBox();
 	QComboBox *deck_list3 = new QComboBox();
