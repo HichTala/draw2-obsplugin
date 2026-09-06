@@ -97,15 +97,16 @@ extern "C" void init_shared_memory(draw_source_data_t *context)
 		context->shared_frame = nullptr;
 	}
 
+	std::string oname = obs_shm_name(context);
 	try {
-		windows_shared_memory shm(create_only, OBS_SHM_NAME, read_write, required_size);
+		windows_shared_memory shm(create_only, oname.c_str(), read_write, required_size);
 		auto *region = new mapped_region(shm, read_write);
 		context->region = region;
 		context->shared_frame = region->get_address();
 		memset(context->shared_frame, 0, sizeof(shared_frame_header_t));
 	} catch (const interprocess_exception &e) {
 		UNUSED_PARAMETER(e);
-		windows_shared_memory shm(open_only, OBS_SHM_NAME, read_write);
+		windows_shared_memory shm(open_only, oname.c_str(), read_write);
 		auto *region = new mapped_region(shm, read_write);
 		context->region = region;
 		context->shared_frame = region->get_address();
@@ -170,11 +171,12 @@ extern "C" void destroy_shared_memory(draw_source_data_t *context)
 
 extern "C" bool read_shared_memory(draw_source_data_t *context)
 {
+	std::string pname = py_shm_name(context);
 #ifdef _WIN32
 	using namespace boost::interprocess;
 
 	try {
-		windows_shared_memory shm(open_only, PYTHON_SHM_NAME, read_only);
+		windows_shared_memory shm(open_only, pname.c_str(), read_only);
 		mapped_region region(shm, read_only);
 
 		auto *python_header = static_cast<shared_frame_header_t *>(region.get_address());
@@ -205,7 +207,6 @@ extern "C" bool read_shared_memory(draw_source_data_t *context)
 
 	return true;
 #else
-	std::string pname = py_shm_name(context);
 	int fd = shm_open(pname.c_str(), O_RDONLY, 0666);
 	if (fd < 0) {
 		context->processing = false;
